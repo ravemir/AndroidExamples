@@ -17,7 +17,7 @@ public class BootReschedulerReceiver extends BroadcastReceiver {
 		
 		// TODO Reschedule them
 		for(@SuppressWarnings("unused") Object sched : schedAlarms){
-			// TODO Do shtuff
+			// TODO Do stuff with each schedule
 		}
 	}
 
