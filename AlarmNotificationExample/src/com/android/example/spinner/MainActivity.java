@@ -19,6 +19,7 @@ package com.android.example.spinner;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -48,45 +49,91 @@ public class MainActivity extends Activity {
         int alarmFreq = 5*1000;
         
         // Schedule AlarmNotification triggering
-        setNotificationAlarm(id, icon, spinner, title, body, when, alarmFreq);
-        setNotificationAlarm(id+1, icon, "HAHA", title, body, when, alarmFreq/5);
+        setRecurringNotificationAlarm(this, id, icon, spinner, title, body, when, alarmFreq);
+        setRecurringNotificationAlarm(this, id+1, icon, "Second, more annoying alarm", title, body, when, alarmFreq/5);
         
         // Cancels a given alarm
-//        cancelAlarmNotification(id);
-//        cancelAlarmNotification(id+1);
+        //cancelAlarmNotification(this, id);
+        //cancelAlarmNotification(this, id+1);
     }
 
 	/**
-	 * @param id
+	 * Cancels a notification with the given id, from within the 
+	 * given context.
+	 * 
+	 * @param c		The context from which the notification was created.
+	 * @param id	The identification number of the scheduled alarm
 	 */
-	private void cancelAlarmNotification(int id) {
-		AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-		Intent i = new Intent(this, AlarmNotificationReceiver.class);
-        PendingIntent pi = PendingIntent.getBroadcast(this, id, i, PendingIntent.FLAG_UPDATE_CURRENT);
+	public static void cancelAlarmNotification(Context c, int id) {
+		// Get the AlarmManager
+		AlarmManager am = (AlarmManager) c.getSystemService(ALARM_SERVICE);
+		
+		// Get the Intent for the 'AlarmNotificationReceiver'
+		Intent i = new Intent(c, AlarmNotificationReceiver.class);
+		
+		// Create 'PendinIntent' to access the 'AlarmNotificationReceiver' 
+        PendingIntent pi = PendingIntent.getBroadcast(c, id, i, PendingIntent.FLAG_UPDATE_CURRENT);
+        
+        // Cancel the alarm (recurring or otherwise)
         am.cancel(pi);
 	}
 
 	/**
-	 * @param id
-	 * @param icon
-	 * @param spinner
-	 * @param title
-	 * @param body
-	 * @param when
-	 * @param alarmFreq
+	 * Schedule a notification to occur repeatedly from time to time,
+	 * built with the passed data (icon, title, body and spinner text).
+	 * 
+	 * @param c			The context from which the notification was created.
+	 * @param id		The intended identification number for the scheduled alarm.
+	 * @param icon		The intended icon for the notification.
+	 * @param spinner	The text to be displayed on the status bar, spinner style.
+	 * @param title		The title of the notification to be displayed.
+	 * @param body		The body of the notification to be displayed.
+	 * @param when		When the notification will be displayed (in miliseconds).
+	 * @param alarmFreq	How often will the notification be displayed (<=0 will display it only once).
 	 */
-	private void setNotificationAlarm(int id, int icon, String spinner,
+	public static void setRecurringNotificationAlarm(Context c, int id, int icon, String spinner,
 			String title, String body, long when, int alarmFreq) {
-		AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-        Intent i = new Intent(this, AlarmNotificationReceiver.class);
+		// Get the AlarmManager 
+		AlarmManager am = (AlarmManager) c.getSystemService(ALARM_SERVICE);
+		
+		// Fill an Intent with the necessary data
+        Intent i = new Intent(c, AlarmNotificationReceiver.class);
 		i.putExtra("ALARM_ID", id);
 		i.putExtra("ALARM_ICON", icon);
 		i.putExtra("ALARM_SPINNER", spinner);
 		i.putExtra("ALARM_TITLE", title);
 		i.putExtra("ALARM_BODY", body);
 		i.putExtra("ALARM_WHEN", when);
-        PendingIntent pi = PendingIntent.getBroadcast(this, id, i, PendingIntent.FLAG_UPDATE_CURRENT);
-		am.setRepeating(AlarmManager.RTC_WAKEUP, when, alarmFreq, pi);
+		
+		// Create 'PendinIntent' to launch the 'AlarmNotificationReceiver'
+        PendingIntent pi = PendingIntent.getBroadcast(c, id, i, PendingIntent.FLAG_UPDATE_CURRENT);
+        
+        // If a non-nil, non-positive number is used as frequency...
+        if(alarmFreq <= 0){
+        	// Schedule one notification
+        	am.set(AlarmManager.RTC_WAKEUP, when, pi);
+        } else{
+        	//...if not, schedule recurring notifications
+        	am.setRepeating(AlarmManager.RTC_WAKEUP, when, alarmFreq, pi);
+        }
+	}
+	
+	/**
+	 * Schedule a notification to occur on the given time, built with the
+	 * passed data (icon, title, body and spinner text).
+	 * 
+	 * @param c			The context from which the notification was created.
+	 * @param id		The intended identification number for the scheduled alarm.
+	 * @param icon		The intended icon for the notification.
+	 * @param spinner	The text to be displayed on the status bar, spinner style.
+	 * @param title		The title of the notification to be displayed.
+	 * @param body		The body of the notification to be displayed.
+	 * @param when		When the notification will be displayed (in miliseconds).
+	 * @param alarmFreq	How often will the notification be displayed (<=0 will display it only once).
+	 */
+	public static void setSingleNotificationAlarm(Context c, int id, int icon, String spinner,
+			String title, String body, long when, int alarmFreq) {
+		setRecurringNotificationAlarm(c, id, icon, spinner, title, body, when, 0);
 	}
 
     @Override
@@ -105,8 +152,8 @@ public class MainActivity extends Activity {
 		super.onDestroy();
 		
         // Cancel alarm notifications, in case of crash
-        cancelAlarmNotification(12345);
-        cancelAlarmNotification(12346);
+        cancelAlarmNotification(this, 12345);
+        cancelAlarmNotification(this, 12346);
 	}
 
 }

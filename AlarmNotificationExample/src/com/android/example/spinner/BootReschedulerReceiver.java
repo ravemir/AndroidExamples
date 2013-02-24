@@ -16,7 +16,7 @@ public class BootReschedulerReceiver extends BroadcastReceiver {
 		ArrayList<Object> schedAlarms = new ArrayList<Object>();
 		
 		// TODO Reschedule them
-		for(Object sched : schedAlarms){
+		for(@SuppressWarnings("unused") Object sched : schedAlarms){
 			// TODO Do shtuff
 		}
 	}
